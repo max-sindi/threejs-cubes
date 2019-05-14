@@ -85,23 +85,143 @@
       let row = 0
       let x = 0
       const meshes = []
+      const rows = []
+      const columns = []
+      const selectedFriendsObj = {}
+      const selectedFriendsArr = []
 
-      for(let i = 1; i < 100; i++) {
+      for(let i = 1; i <= 100; i++) {
         const geometry = new THREE.PlaneGeometry( 5, 5 )
+        const color = Date.now() % 2 === 0 ? 'red' : 'green'
         const material = new THREE.MeshBasicMaterial( {
-          color: Date.now() % 2 === 0 ? 'red' : 'green',
+          color,
           side: THREE.DoubleSide}
         );
 
         const mesh = new THREE.Mesh( geometry, material );
-        mesh.myProp = i;
+        mesh.counter = i;
+        // mesh.position = i;
+        mesh.color = color
         mesh.position.x = x * 7
-        mesh.position.y = row * 7
+        mesh.position.y = row * -7
 
-        mesh.on('mousedown', e => {
-          console.warn(e.target.myProp)
-        })
+        mesh.column = x
+        mesh.row = row
 
+        function meshClickHanlder(clickEvent) {
+          const position = clickEvent.target.counter
+          // let selectedFriendLastPushed = 0
+
+          // main function
+           // console.log(position)
+           const tryFindFriends = (function () {
+             // return console.log(clickEvent)
+             // let preveousFriendsAmount = 0;
+             // let inited = false
+
+             const resFunc = function(counter) {
+
+               //  debugger;
+               // // count++;
+               // if(!inited) {
+               //   inited = true
+               // } else {
+               //    if(preveousFriendsAmount === selectedFriendsArr.length) {
+               //      return 'end';
+               //    }
+               // }
+
+               // preveousFriendsAmount = selectedFriendsArr.length
+
+               const cases = [counter - 1, counter+1, counter + 10, counter - 10]
+
+               function doNeedGo(i) {
+                 return i < cases.length
+               }
+
+               for (let i = 0; doNeedGo(i); i++) {
+                 /* skip row portals */
+                 const currentCase = cases[i]
+                 if(i < 2) {
+                   // debugger
+                   if(
+                     (i === 0 && cases[i] % 10 === 0) ||
+                     (i === 1 && (cases[i] - 1) % 10 === 0)
+                   ) {
+                     continue;
+                   }
+                 }
+                 /**************/
+
+
+
+                 try {
+                   // try get
+                   const friend = meshes[cases[i] - 1]
+
+                   // if different colors - skip
+                   if(friend.color !== color) {
+                     continue;
+                   }
+
+                   // console.log(friend.counter)
+
+                   if(friend && !selectedFriendsObj[friend.counter]) {
+                     selectedFriendsObj[friend.counter] = friend;
+                     selectedFriendsArr.push(friend);
+
+                     // if(inited) {
+                     //
+                     //   selectedFriendLastPushed++;
+                     // }
+                   }
+                 } catch (e) {
+                   console.warn('All is ok', e.message)
+                 }
+               }
+             }
+
+             resFunc.currentGenerator = function () { return  count}
+              return resFunc
+           }())
+
+           //
+
+           tryFindFriends(position)
+
+           for(let i = 0; i < selectedFriendsArr.length; i++) {
+             // debugger
+            tryFindFriends(selectedFriendsArr[i].counter)
+           }
+
+          // color all selected
+           selectedFriendsArr.forEach(friend => {
+             friend.material.color.b = 0.5
+
+             // friend('on')
+             // scene.remove(friend);
+           })
+
+
+            // selectedFriendsArr.forEach(friend => tryFindFriends(friend.counter))
+
+
+           // while (tryFindFriends() !== 'end') {
+           //
+           // }
+
+           // Object.values(selectedFriends).forEach(friend => tryFindFriends(friend.counter))
+
+
+            if(true /* todo: if all was sekected */) {
+              console.warn(selectedFriendsArr)
+
+              selectedFriendsArr.forEach(friend => console.log(friend.material.color.b = 0.5))
+            }
+         }
+
+
+        mesh.on('click', meshClickHanlder)
         meshes.push(mesh)
 
         x++;
@@ -111,10 +231,8 @@
           x = 0;
         }
       }
-
-      // var geometry = new THREE.PlaneGeometry( 20, 20 )
       // var material = new THREE.MeshBasicMaterial( {
-      //   color: 0xffff00,
+      //   color: 0xffff00,Z!ZZ
       //   side: THREE.DoubleSide}
       // );
 
