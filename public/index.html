@@ -38,57 +38,50 @@
 <script src="../node_modules/three.interaction/build/three.interaction.js"></script>
 </script>
 		<script>
+    console.log('Поставить стар варс');
 			var scene = new THREE.Scene();
 			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 100, 5 );
+      const columnNumber = 10;
 
 			var renderer = new THREE.WebGLRenderer();
       const interaction = new Interaction(renderer, scene, camera);
 			renderer.setSize( window.innerWidth, window.innerHeight );
 			document.body.appendChild( renderer.domElement );
 
-			// var geometry = new THREE.BoxGeometry( 1, 1, 1 );
-      // var geometry = new THREE.Geometry();
-      // geometry.vertices.push(new THREE.Vector3( 0, 10, 0) );
-      // geometry.vertices.push(new THREE.Vector3( 0 , 0, 0) );
-      // geometry.vertices.push(new THREE.Vector3( 10, 0, 10) );
-      // // geometry.vertices.push(new THREE.Vector3( 10, 0, 0) );
-			// var material = new THREE.LineBasicMaterial( { color: 0x00ff00 } );
-			// // var cube = new THREE.Mesh( geometry, material );
-      // var line = new THREE.Line( geometry, material );
-			// scene.add( line );
-      // var geometry = new THREE.Geometry();
-      // geometry.vertices.push(new THREE.Vector3( 7, 2, 0) );
-      // geometry.vertices.push(new THREE.Vector3( 0 , 0, 0) );
-      // // geometry.vertices.push(new THREE.Vector3( 10, 0, 0) );
-			// var material = new THREE.LineBasicMaterial( { color: 0x00ff22 } );
-			// // var cube = new THREE.Mesh( geometry, material );
-      // var line = new THREE.Line( geometry, material );
-			// scene.add( line );
-      // var geometry = new THREE.Geometry();
-      // geometry.vertices.push(new THREE.Vector3( 10, 4, 0) );
-      // geometry.vertices.push(new THREE.Vector3( 0 , 0, 0) );
-      // // geometry.vertices.push(new THREE.Vector3( 10, 0, 0) );
-			// var material = new THREE.LineBasicMaterial( { color: 0x00ff22 } );
-			// // var cube = new THREE.Mesh( geometry, material );
-      // var line = new THREE.Line( geometry, material );
-			// scene.add( line );
-      // var geometry = new THREE.Geometry();
-      // geometry.vertices.push(new THREE.Vector3( 10, 10, 0) );
-      // geometry.vertices.push(new THREE.Vector3( 0 , 0, 0) );
-      // // geometry.vertices.push(new THREE.Vector3( 10, 0, 0) );
-			// var material = new THREE.LineBasicMaterial( { color: 0x00ff22 } );
-			// // var cube = new THREE.Mesh( geometry, material );
-      // var line = new THREE.Line( geometry, material );
-			// scene.add( line );
-
       const all = 100
       let row = 0
       let x = 0
-      const meshes = []
+      let cacheColor;
+      let meshes = []
       const rows = []
       const columns = []
-      const selectedFriendsObj = {}
-      const selectedFriendsArr = []
+      const rowHeight = 7
+      let selectedFriendsObj = {}
+      let selectedFriendsArr = []
+      let scores = 0;
+
+      class Kotik extends THREE.Mesh {
+        constructor() {
+          super(...arguments);
+          this.tasks = []
+        }
+
+        putDown(rows = 1) {
+          // debug
+          if(meshes[ this.counter + 9 ]) {
+            console.warn('Something is not ok, the place below is occupied by another mesh');
+          } else {
+            this.position.y -= rowHeight * rows
+            delete meshes[this.counter - 1]
+            meshes[this.counter + 9] = this
+          }
+
+        }
+        //
+        // taskManager(newTask) {
+        //
+        // }
+      }
 
       for(let i = 1; i <= 100; i++) {
         const geometry = new THREE.PlaneGeometry( 5, 5 )
@@ -98,27 +91,76 @@
           side: THREE.DoubleSide}
         );
 
-        const mesh = new THREE.Mesh( geometry, material );
+        const mesh = new Kotik( geometry, material );
         mesh.counter = i;
-        // mesh.position = i;
         mesh.color = color
         mesh.position.x = x * 7
-        mesh.position.y = row * -7
+        mesh.position.y = row * -rowHeight
 
         mesh.column = x
         mesh.row = row
 
+        function increaseScores(addingScores) {
+          scores += 5 * addingScores * addingScores
+        }
+
+        function repositionFriends() {
+          debugger
+          for(let i = meshes.length - 1; i >= 0; i--) {
+            const mesh = meshes[i]
+            if(!mesh) {
+              return
+            }
+
+            // const meshUnder = meshes[i + 10];
+            // if(!meshUnder) {
+              tryDown(mesh)
+            // }
+          }
+
+          function tryDown(mesh) {
+            while( isUnderPlaceOccupated() ) {
+              mesh.putDown()
+            }
+
+            function isUnderPlaceOccupated() {
+              return !!meshes[ mesh.conter + 9 ]
+            }
+          }
+        }
+
+        function destroyFriends() {
+          selectedFriendsArr.forEach(friend => {
+            scene.remove(friend);
+            delete meshes[friend.counter - 1];
+          })
+
+          increaseScores(selectedFriendsArr.length);
+          console.log(`Scores after increasing: ${scores}`)
+
+          repositionFriends();
+        }
+
         function meshClickHanlder(clickEvent) {
+
           const position = clickEvent.target.counter
-          // let selectedFriendLastPushed = 0
+          // if it is second click and can destroy
+          if( selectedFriendsObj[position] ) {
+            destroyFriends();
+            selectedFriendsArr = [];
+            selectedFriendsObj = {};
+            return;
+
+          } else {
+            selectedFriendsArr.forEach(friend => friend.material.color = {...friend.material.color, ...cacheColor})
+            cacheColor = null
+          }
+
+          selectedFriendsArr = [];
+          selectedFriendsObj = {};
 
           // main function
-           // console.log(position)
            const tryFindFriends = (function () {
-             // return console.log(clickEvent)
-             // let preveousFriendsAmount = 0;
-             // let inited = false
-
              const resFunc = function(counter) {
 
                //  debugger;
@@ -185,39 +227,26 @@
               return resFunc
            }())
 
-           //
-
            tryFindFriends(position)
 
+           if(selectedFriendsArr.length === 0) {
+             return;
+           }
+
            for(let i = 0; i < selectedFriendsArr.length; i++) {
-             // debugger
             tryFindFriends(selectedFriendsArr[i].counter)
            }
 
           // color all selected
+          cacheColor = {...selectedFriendsArr[0].material.color}
            selectedFriendsArr.forEach(friend => {
              friend.material.color.b = 0.5
-
-             // friend('on')
-             // scene.remove(friend);
            })
 
+           console.log(`Scores: ${scores}`)
 
-            // selectedFriendsArr.forEach(friend => tryFindFriends(friend.counter))
-
-
-           // while (tryFindFriends() !== 'end') {
-           //
-           // }
-
-           // Object.values(selectedFriends).forEach(friend => tryFindFriends(friend.counter))
-
-
-            if(true /* todo: if all was sekected */) {
-              console.warn(selectedFriendsArr)
-
-              selectedFriendsArr.forEach(friend => console.log(friend.material.color.b = 0.5))
-            }
+           // selectedFriendsArr.forEach(friend => friend.material.color.b = 0.5)
+           // console.warn(selectedFriendsArr)
          }
 
 
@@ -231,17 +260,8 @@
           x = 0;
         }
       }
-      // var material = new THREE.MeshBasicMaterial( {
-      //   color: 0xffff00,Z!ZZ
-      //   side: THREE.DoubleSide}
-      // );
 
       meshes.forEach(mesh => scene.add(mesh))
-
-      // var plane = new THREE.Mesh( geometry, material );
-      // plane.position.x = -10;
-      // plane.position.y = -10;
-      // scene.add(plane)
 
 	  camera.position.z = 100;
     camera.position.x = 40;
