@@ -34,62 +34,100 @@
       To begin the development, run `npm start` or `yarn start`.
       To create a production bundle, use `npm run build` or `yarn build`.
     -->
-<script src="../node_modules/three/build/three.js"></script>
-<script src="../node_modules/three.interaction/build/three.interaction.js"></script>
-</script>
+    <script src="../node_modules/three/build/three.js"></script>
+    <script src="../node_modules/three.interaction/build/three.interaction.js"></script>
 		<script>
-    console.log('Поставить стар варс');
-			var scene = new THREE.Scene();
-			var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 100, 5 );
+    /***
+      INITIAL CONFIGURATIONS
+    ***/
+    // console.log('Поставить стар варс');
+      var scene = new THREE.Scene();
+      var camera = new THREE.PerspectiveCamera( 75, window.innerWidth/window.innerHeight, 100, 5 );
       const columnNumber = 10;
 
-			var renderer = new THREE.WebGLRenderer();
+      var renderer = new THREE.WebGLRenderer();
       const interaction = new Interaction(renderer, scene, camera);
-			renderer.setSize( window.innerWidth, window.innerHeight );
-			document.body.appendChild( renderer.domElement );
+      renderer.setSize( window.innerWidth, window.innerHeight );
+      document.body.appendChild( renderer.domElement );
 
+
+
+
+
+      /***
+        VARIABLES
+      ***/
       const all = 100
       let row = 0
       let x = 0
-      let cacheColor;
+      let cacheColor
       let meshes = []
-      const rows = []
-      const columns = []
       const rowHeight = 7
       let selectedFriendsObj = {}
       let selectedFriendsArr = []
       let scores = 0;
 
+
+
+    /***
+      CLASS FOR EACH CUBE
+    ***/
       class Kotik extends THREE.Mesh {
+      // class Kotik extends THREE.LineSegments {
         constructor() {
           super(...arguments);
-          this.tasks = []
         }
 
         putDown(rows = 1) {
-          // debug
+          // debug warn
           if(meshes[ this.counter + 9 ]) {
             console.warn('Something is not ok, the place below is occupied by another mesh');
           } else {
-            this.position.y -= rowHeight * rows
+            let i = 10;
+            const height = rows * rowHeight
+            const timer = setInterval(() => {
+              this.position.y -= height  / i
+              i--;
+              if (i === 0) {
+                clearInterval(timer);
+              }
+            }, 100)
+            // for(let i = 10; i >= 1 ; i--) {
+              // setTimeout(
+              //         () => {
+              //
+              //         }
+              // ),
+              // this.position.y = initialY - ((rowHeight * rows) / i)
+            // }
             delete meshes[this.counter - 1]
             meshes[this.counter + 9] = this
+            this.setCounter(this.counter + 10)
           }
 
         }
-        //
-        // taskManager(newTask) {
-        //
-        // }
+
+        setCounter(counter) {
+          this.counter = counter
+        }
       }
 
-      for(let i = 1; i <= 100; i++) {
-        const geometry = new THREE.PlaneGeometry( 5, 5 )
+
+
+
+      /***
+        CREATE ALL CUBES
+      ***/
+      for(let i = 1; i <= all; i++) {
+        // const geometry = new THREE.EdgesGeometry( new THREE.BoxGeometry( 5, 5, 5 ) )
+        const geometry = new THREE.BoxGeometry( 5, 5, 5 )
         const color = Date.now() % 2 === 0 ? 'red' : 'green'
         const material = new THREE.MeshBasicMaterial( {
+        // const material = new THREE.LineBasicMaterial( {
           color,
-          side: THREE.DoubleSide}
-        );
+          // linewidth: 2,
+          side: THREE.DoubleSide
+        });
 
         const mesh = new Kotik( geometry, material );
         mesh.counter = i;
@@ -105,26 +143,24 @@
         }
 
         function repositionFriends() {
-          debugger
           for(let i = meshes.length - 1; i >= 0; i--) {
             const mesh = meshes[i]
+debugger
             if(!mesh) {
-              return
+              continue;
             }
 
-            // const meshUnder = meshes[i + 10];
-            // if(!meshUnder) {
-              tryDown(mesh)
-            // }
+            tryToMoveDown(mesh)
           }
 
-          function tryDown(mesh) {
-            while( isUnderPlaceOccupated() ) {
+          function tryToMoveDown(mesh) {
+            while( isUnderPlaceFree() ) {
               mesh.putDown()
             }
 
-            function isUnderPlaceOccupated() {
-              return !!meshes[ mesh.conter + 9 ]
+            function isUnderPlaceFree() {
+              const targetPlace = mesh.counter + 9
+              return targetPlace < 100 && !meshes[ targetPlace ]
             }
           }
         }
@@ -141,7 +177,16 @@
           repositionFriends();
         }
 
-        function meshClickHanlder(clickEvent) {
+
+
+
+
+        /***
+          MAIN CLICK HANDLER ON EVERY CUBE
+        ***/
+        mesh.on('click', meshClickHandler)
+        meshes.push(mesh)
+        function meshClickHandler(clickEvent) {
 
           const position = clickEvent.target.counter
           // if it is second click and can destroy
@@ -162,19 +207,6 @@
           // main function
            const tryFindFriends = (function () {
              const resFunc = function(counter) {
-
-               //  debugger;
-               // // count++;
-               // if(!inited) {
-               //   inited = true
-               // } else {
-               //    if(preveousFriendsAmount === selectedFriendsArr.length) {
-               //      return 'end';
-               //    }
-               // }
-
-               // preveousFriendsAmount = selectedFriendsArr.length
-
                const cases = [counter - 1, counter+1, counter + 10, counter - 10]
 
                function doNeedGo(i) {
@@ -182,10 +214,10 @@
                }
 
                for (let i = 0; doNeedGo(i); i++) {
-                 /* skip row portals */
+
+                 /* code block below skips row portals */
                  const currentCase = cases[i]
                  if(i < 2) {
-                   // debugger
                    if(
                      (i === 0 && cases[i] % 10 === 0) ||
                      (i === 1 && (cases[i] - 1) % 10 === 0)
@@ -193,6 +225,8 @@
                      continue;
                    }
                  }
+
+
                  /**************/
 
 
@@ -201,7 +235,7 @@
                    // try get
                    const friend = meshes[cases[i] - 1]
 
-                   // if different colors - skip
+                   // skip if different colors
                    if(friend.color !== color) {
                      continue;
                    }
@@ -211,14 +245,9 @@
                    if(friend && !selectedFriendsObj[friend.counter]) {
                      selectedFriendsObj[friend.counter] = friend;
                      selectedFriendsArr.push(friend);
-
-                     // if(inited) {
-                     //
-                     //   selectedFriendLastPushed++;
-                     // }
                    }
                  } catch (e) {
-                   console.warn('All is ok', e.message)
+                   console.warn('Error is OK, ', e.message)
                  }
                }
              }
@@ -244,14 +273,7 @@
            })
 
            console.log(`Scores: ${scores}`)
-
-           // selectedFriendsArr.forEach(friend => friend.material.color.b = 0.5)
-           // console.warn(selectedFriendsArr)
          }
-
-
-        mesh.on('click', meshClickHanlder)
-        meshes.push(mesh)
 
         x++;
 
@@ -264,20 +286,18 @@
       meshes.forEach(mesh => scene.add(mesh))
 
 	  camera.position.z = 100;
-    camera.position.x = 40;
-			// camera.posit0ion.y = 1/;
+      camera.position.x = 40;
 
-			var animate = function () {
-				requestAnimationFrame( animate );
+      const animate = function () {
+        requestAnimationFrame( animate );
 
-				// line.rotation.x += 0.01;
-				// line.rotation.y += 0.01;
-//
-				renderer.render( scene, camera );
-			};
+        // line.rotation.y += 0.01;
+        // line.rotation.x += 0.01;
+        renderer.render( scene, camera );
+      };
 
-			animate();
-		</script>
+      animate();
+    </script>
   </body>
 
 </html>
