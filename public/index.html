@@ -4,36 +4,41 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="theme-color" content="#000000" />
-    <!--
-      manifest.json provides metadata used when your web app is installed on a
-      user's mobile device or desktop. See https://developers.google.com/web/fundamentals/web-app-manifest/
-    -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-
-    <!--
-      Notice the use of %PUBLIC_URL% in the tags above.
-      It will be replaced with the URL of the `public` folder during the build.
-      Only files inside the `public` folder can be referenced from the HTML.
-
-      Unlike "/favicon.ico" or "favicon.ico", "%PUBLIC_URL%/favicon.ico" will
-      work correctly both with client-side routing and a non-root public URL.
-      Learn how to configure a non-root public URL by running `npm run build`.
-    -->
-    <title>React App</title>
+    <title>Kotiki App</title>
   </head>
   <body>
+    <style>
+      .scores__wrapper {
+        position: fixed;
+        display: flex;
+        top: 200px;
+        left: 50%;
+        transform: translateX(-50%);
+        align-items: center;
+      }
+
+      .scores__title {
+        color: #FFDC00;
+        font-size: 60px;
+        margin-right: 10px;
+      }
+
+      .scores {
+        color: #FF851B;
+        font-size: 70px;
+      }
+    </style>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
-    <!--
-      This HTML file is a template.
-      If you open it directly in the browser, you will see an empty page.
-
-      You can add webfonts, meta tags, or analytics to this file.
-      The build step will place the bundled scripts into the <body> tag.
-
-      To begin the development, run `npm start` or `yarn start`.
-      To create a production bundle, use `npm run build` or `yarn build`.
-    -->
+    <div class="scores__wrapper">
+      <div class="scores__title">
+        Scores:
+      </div>
+      <div class="scores"   id="scores">
+        0
+      </div>
+    </div>
     <script src="../node_modules/three/build/three.js"></script>
     <script src="../node_modules/three.interaction/build/three.interaction.js"></script>
 		<script>
@@ -83,23 +88,7 @@
           if(meshes[ this.counter + 9 ]) {
             console.warn('Something is not ok, the place below is occupied by another mesh');
           } else {
-            let i = 10;
-            const height = rows * rowHeight
-            const timer = setInterval(() => {
-              this.position.y -= height  / i
-              i--;
-              if (i === 0) {
-                clearInterval(timer);
-              }
-            }, 100)
-            // for(let i = 10; i >= 1 ; i--) {
-              // setTimeout(
-              //         () => {
-              //
-              //         }
-              // ),
-              // this.position.y = initialY - ((rowHeight * rows) / i)
-            // }
+            this.position.y -= rowHeight * rows
             delete meshes[this.counter - 1]
             meshes[this.counter + 9] = this
             this.setCounter(this.counter + 10)
@@ -113,7 +102,18 @@
       }
 
 
+      function randomColor() {
+        const colors = {
+          0: 'green',
+          1: 'red',
+          2: 'yellow',
+          3: 'blue',
+          4: 'purple'
+        };
 
+        const randomNumber = Math.floor(Math.random() * (+5 - +0)) + +0;
+        return colors[ randomNumber ];
+      }
 
       /***
         CREATE ALL CUBES
@@ -121,7 +121,8 @@
       for(let i = 1; i <= all; i++) {
         // const geometry = new THREE.EdgesGeometry( new THREE.BoxGeometry( 5, 5, 5 ) )
         const geometry = new THREE.BoxGeometry( 5, 5, 5 )
-        const color = Date.now() % 2 === 0 ? 'red' : 'green'
+        // const color = Date.now() % 2 === 0 ? 'red' : 'green'
+        const color = randomColor()
         const material = new THREE.MeshBasicMaterial( {
         // const material = new THREE.LineBasicMaterial( {
           color,
@@ -145,7 +146,7 @@
         function repositionFriends() {
           for(let i = meshes.length - 1; i >= 0; i--) {
             const mesh = meshes[i]
-debugger
+
             if(!mesh) {
               continue;
             }
@@ -173,6 +174,7 @@ debugger
 
           increaseScores(selectedFriendsArr.length);
           console.log(`Scores after increasing: ${scores}`)
+          document.getElementById('scores').innerHTML = scores;
 
           repositionFriends();
         }
