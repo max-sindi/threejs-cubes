@@ -1,6 +1,7 @@
-import React, { useState, useEffect } from 'react';
-import './App.css';
-import { Canvas } from 'react-three-fiber'
+import React from 'react';
+import { Canvas, useThree } from 'react-three-fiber'
+import uuid from "uuid/v4"
+import * as THREE from 'three'
 
 function randomColor() {
   const colors = {
@@ -22,14 +23,20 @@ function initialKotiki() {
     const kotik = {
       geometry: {
         width: 5,
-        heigth: 5,
+        height: 5,
         depth: 5,
       },
       material: {
         color: randomColor()
-      }
+      },
+      counter: i,
+      id: uuid(),
     }
+
+    kotiki.push(kotik)
   }
+
+  return kotiki;
 }
 
 class App extends React.Component {
@@ -37,14 +44,49 @@ class App extends React.Component {
     kotiki: initialKotiki()
   }
 
+
+  componentDidMount() {
+
+
+  }
+
+
   render() {
     return (
-      <Canvas></Canvas>
+      <group>
+        {this.state.kotiki.map(kotik => {
+          const {width, height, depth} = kotik.geometry
+
+          return (
+            <mesh key={kotik.id} visible>
+              <boxGeometry attach="geometry" args={[width, height, depth]} />
+              <meshLambertMaterial attach={'material'} color={kotik.material.color} side={THREE.DoubleSide}/>
+            </mesh>
+          )
+        })}
+      </group>
     );
   }
 }
 
-export default App;
+function AppHook() {
+
+  const {camera} = useThree()
+  camera.position.z = 40
+
+  return <App />
+}
+
+function AppWrappedWithCanvas () {
+
+  return (
+    <Canvas>
+      <AppHook/>
+    </Canvas>
+  )
+}
+
+export default AppWrappedWithCanvas;
 
 
 // <script>
