@@ -1113,7 +1113,7 @@ dynamicDampingFactor: {
 
 } );
     </script>
-		<script>
+      <script>
     /***
       INITIAL CONFIGURATIONS
     ***/
@@ -1126,12 +1126,15 @@ dynamicDampingFactor: {
               5000,
       );
       const columnNumber = 10;
-
+      var light = new THREE.PointLight('#fff');
       var renderer = new THREE.WebGLRenderer();
+
       const interaction = new Interaction(renderer, scene, camera);
+      light.position.set(10, 0, 25);
+      scene.add(light);
       renderer.setSize( window.innerWidth, window.innerHeight );
       document.body.appendChild( renderer.domElement );
-      // debugger
+
       controls = new THREE.OrbitControls (camera, renderer.domElement);
 
 
@@ -1201,7 +1204,7 @@ dynamicDampingFactor: {
         const geometry = new THREE.BoxGeometry( 5, 5, 5 )
         // const color = Date.now() % 2 === 0 ? 'red' : 'green'
         const color = randomColor()
-        const material = new THREE.MeshBasicMaterial( {
+        const material = new THREE.MeshLambertMaterial( {
         // const material = new THREE.LineBasicMaterial( {
           color,
           // linewidth: 2,
