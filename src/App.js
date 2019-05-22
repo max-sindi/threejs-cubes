@@ -3,21 +3,28 @@ import { Canvas, useThree } from 'react-three-fiber'
 import uuid from "uuid/v4"
 import * as THREE from 'three'
 
+
+const initialOpacity = 0.8
 function randomColor() {
   const colors = {
-    0: 'green',
-    1: 'red',
-    2: 'yellow',
-    3: 'blue',
-    4: 'purple'
+    0: { simple: 'green', hex: '#da03ec' },
+    1: { simple: 'red', hex: '#fe0400' },
+    2: { simple: 'yellow', hex: '#fceb48'},
+    3: { simple: 'blue', hex: '#34acfe'},
+    4: { simple: 'purple', hex: '#e636ff'},
   };
   const randomNumber = Math.floor(Math.random() * (+5 - +0)) + +0;
   return colors[ randomNumber ];
 }
 
 function initialKotiki() {
-  const kotiki = [];
-  const all = 100;
+  const kotiki = []
+  const all = 100
+  let row = 0
+  let column = 0
+  const rowHeight = 7
+  const columnWidth = 7
+
 
   for(let i = 1; i <= all; i++) {
     const kotik = {
@@ -29,8 +36,20 @@ function initialKotiki() {
       material: {
         color: randomColor()
       },
+      position: {
+        x : column * columnWidth - 25,
+        y : row * rowHeight - 25,
+      },
+      opacity: initialOpacity,
       counter: i,
       id: uuid(),
+    }
+
+    column++;
+
+    if(i % 10 === 0) {
+      row++;
+      column = 0;
     }
 
     kotiki.push(kotik)
@@ -41,12 +60,34 @@ function initialKotiki() {
 
 class App extends React.Component {
   state = {
-    kotiki: initialKotiki()
+    kotiki: initialKotiki(),
+    selectedKotikiObj: {0: true},
+    selectedKotikiArr: [],
   }
-
 
   componentDidMount() {
 
+
+  }
+
+  kotikClickHandler = (e, kotik) => {
+    const {counter} = kotik
+
+    // destroy if true, highlight if false
+    if(this.state.selectedKotikiObj[ counter ]) {
+      this.destroySelected();
+      this.setState({ selectedKotikiObj: {}, selectedKotikiArr: [] })
+      return;
+    } else {
+      this.setState(state => ({
+        ...state,
+        kotiki: state.kotiki.map(kotik =>
+          (kotik.counter === counter ? {...kotik, opacity: 1} : kotik)),
+
+      }))
+
+
+    }
 
   }
 
@@ -54,13 +95,24 @@ class App extends React.Component {
   render() {
     return (
       <group>
+        <pointLight position-z={40} />
         {this.state.kotiki.map(kotik => {
           const {width, height, depth} = kotik.geometry
+          const {x, y, z = 0} = kotik.position
 
           return (
-            <mesh key={kotik.id} visible>
+            <mesh
+              key={kotik.id}
+              position={[x, y, z]}
+              onClick={(e) => this.kotikClickHandler(e, kotik)}
+            >
               <boxGeometry attach="geometry" args={[width, height, depth]} />
-              <meshLambertMaterial attach={'material'} color={kotik.material.color} side={THREE.DoubleSide}/>
+              <meshBasicMaterial
+                attach={'material'}
+                color={kotik.material.color.hex}
+                opacity={kotik.opacity}
+                transparent={true}
+              />
             </mesh>
           )
         })}
@@ -72,7 +124,8 @@ class App extends React.Component {
 function AppHook() {
 
   const {camera} = useThree()
-  camera.position.z = 40
+  camera.position.z = 80
+  window.camera = camera
 
   return <App />
 }
@@ -80,7 +133,7 @@ function AppHook() {
 function AppWrappedWithCanvas () {
 
   return (
-    <Canvas>
+    <Canvas style={{height: '100vh', backgroundColor: '#000'}}>
       <AppHook/>
     </Canvas>
   )
